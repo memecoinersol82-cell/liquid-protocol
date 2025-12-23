@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💧 Liquid Liquid - Fee Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <div class="noise"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">💧</div>
+        <div class="logo-text">
+          <h1>LIQUID<span>LIQUID</span></h1>
+          <p>Fee Claimer & Buyback Bot</p>
+        </div>
+      </div>
+      <div class="status-indicator" id="connectionStatus">
+        <span class="status-dot"></span>
+        <span class="status-text">Connecting...</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Left Panel - Stats -->
+      <div class="left-panel">
+        <!-- Status Card -->
+        <div class="card status-card">
+          <div class="card-header">
+            <h2>📊 Bot Status</h2>
+            <div class="phase-badge" id="phaseBadge">Unknown</div>
+          </div>
+          <div class="card-body">
+            <div class="bot-status-row">
+              <span class="bot-status-label">Bot Status:</span>
+              <span class="bot-status-value" id="botStatus">⏳ Initializing...</span>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                  <span class="stat-value" id="feesCollected">0.000</span>
+                  <span class="stat-label">SOL Claimed</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-content">
+                  <span class="stat-value" id="buybacks">0.000</span>
+                  <span class="stat-label">SOL Buybacks</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon">🪙</div>
+                <div class="stat-content">
+                  <span class="stat-value" id="solHeld">0.000</span>
+                  <span class="stat-label">SOL Held</span>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                  <span class="stat-value" id="tokensHeld">0</span>
+                  <span class="stat-label">Tokens Held</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <div class="info-row">
+                <span class="info-label">Token:</span>
+                <span class="info-value mono" id="tokenMint">Loading...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Wallet:</span>
+                <span class="info-value mono" id="walletAddress">Loading...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">PumpSwap Pool:</span>
+                <span class="info-value mono" id="poolAddress">Not detected</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Last Check:</span>
+                <span class="info-value" id="lastCheck">Never</span>
+              </div>
+            </div>
+
+            <div class="control-buttons">
+              <button class="btn btn-success" id="startBtn">
+                <span class="btn-icon">▶️</span>
+                Start Bot
+              </button>
+              <button class="btn btn-danger" id="stopBtn" disabled>
+                <span class="btn-icon">⏹️</span>
+                Stop Bot
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Config Display Card -->
+        <div class="card config-card">
+          <div class="card-header">
+            <h2>⚙️ Configuration</h2>
+            <span class="config-source">.env file</span>
+          </div>
+          <div class="card-body">
+            <div class="config-row">
+              <span class="config-label">Min Fee Threshold:</span>
+              <span class="config-value" id="configMinFee">0.015 SOL</span>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Buyback %:</span>
+              <span class="config-value" id="configBuyback">50%</span>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Check Interval:</span>
+              <span class="config-value" id="configInterval">60s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel - Terminal -->
+      <div class="right-panel">
+        <div class="card terminal-card">
+          <div class="card-header terminal-header">
+            <h2>🖥️ Live Terminal</h2>
+            <div class="terminal-controls">
+              <button class="terminal-btn" id="clearLogs" title="Clear logs">
+                🗑️
+              </button>
+              <button class="terminal-btn" id="scrollBottom" title="Scroll to bottom">
+                ⬇️
+              </button>
+            </div>
+          </div>
+          <div class="terminal" id="terminal">
+            <div class="terminal-welcome">
+              <pre>
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   💧 LIQUID LIQUID - Fee Claimer & Buyback Bot 💧         ║
+║                                                           ║
+║   • Claims Token-2022 fees when above threshold           ║
+║   • 50% buyback, 50% hold SOL                             ║
+║   • Auto-detects PumpSwap migration                       ║
+║   • Adds liquidity to PumpSwap LP                         ║
+║                                                           ║
+║   Configure via .env file and press Start!                ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+
+</html>
